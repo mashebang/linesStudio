@@ -1,12 +1,12 @@
+lume = require "lume"
+
 width = 720
 height = 1280
 half_height = height / 2
 half_width = width / 2
 position_ref = width / 7
-way_counter = 1
-controls_rate = 1/3;
 controls_sec_ref = 0
-second_ref = 0
+score = 0
 
 player = {}
 player["position"] = 1
@@ -23,37 +23,44 @@ function player_drawer()
 end
 
 function way_drawer(dt)
-  aux = height / 20
-  love.graphics.line(half_width, (aux * way_counter) - aux, half_width, (aux * way_counter * 1.2))
-  love.graphics.line((half_width - (half_width / 4)), 0, (half_width / 8), height)
-  love.graphics.line((half_width + (half_width / 4)), 0, (width - (half_width / 8)), height)
-  way_counter = way_counter + (dt * 10) 
+  lateral_size = width / 8
+  love.graphics.print(lume.round(score * 100), 0, 100)
+  love.graphics.line(lateral_size, 0, lateral_size, height)
+  love.graphics.line(width - lateral_size, 0, (width - lateral_size), height)
+  love.graphics.line(width - lateral_size, 0, (width - lateral_size), height)
+end
 
-  if way_counter > 20 then
-    way_counter = 1
+function move_right()
+  if player["position"] < 7 then
+    player["position"] = current_position + 1
+  end
+end
+
+function move_left()
+  if player["position"] > 1 then
+    player["position"] = current_position - 1
   end
 end
 
 function controls()
-  current_position = player["position"]
-
   if love.keyboard.isDown("d") then
-    print("d")
-    if current_position < 7 then
-      player["position"] = current_position + 1
-    end
+    move_right()
   end
 
   if love.keyboard.isDown("a") then
-    print("a")
-    if current_position > 1 then
-      player["position"] = current_position - 1
-    end
+    move_left()
+  end
+  if love.mouse.isDown(1) then
+    x = love.mouse.getX()
+    if (x > half_width) then
+      move_right()
+    else
+      move_left()
+    end  
   end
 end
 
 function love.update(dt)
-  second_ref = second_ref + dt
   controls_sec_ref = controls_sec_ref + dt
   function love.draw()
     way_drawer(dt)
@@ -65,7 +72,11 @@ function love.update(dt)
     controls()
   end
 
-  if (second_ref == 1) then
-    second_ref = 0
+  current_position = player["position"]
+
+  if current_position == 1 or current_position == 7 then
+    score = score - dt
+  else
+    score = score + dt
   end
 end
