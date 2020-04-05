@@ -4,13 +4,12 @@ width = 720
 height = 1280
 half_height = height / 2
 half_width = width / 2
-position_ref = width / 7
-controls_sec_ref = 0
 score = 0
+lateral_size = width / 8
 
 player = {}
-player["position"] = 1
-player["height"] = 900
+player["x"] = half_width 
+player["y"] = 900
 player["radius"] = 30
 
 function love.load()
@@ -18,8 +17,8 @@ function love.load()
 end
 
 function player_drawer()
-  x_cord = position_ref * player["position"]
-  love.graphics.circle("fill", (x_cord - 50), player["height"], player["radius"])
+  x_cord = player["x"] - 50
+  love.graphics.circle("fill", x_cord, player["y"], player["radius"])
 end
 
 function way_drawer(dt)
@@ -31,14 +30,30 @@ function way_drawer(dt)
 end
 
 function move_right()
-  if player["position"] < 7 then
-    player["position"] = current_position + 1
+  current_position = player["x"]
+  if current_position < (width) then
+    player["x"] = current_position + 10
   end
 end
 
 function move_left()
-  if player["position"] > 1 then
-    player["position"] = current_position - 1
+  current_position = player["x"]
+  if current_position > 100 then
+    player["x"] = current_position - 10
+  end
+end
+
+function move_up()
+  current_position = player["y"]
+  if current_position > 0 then
+    player["y"] = current_position - 10
+  end
+end
+
+function move_down()
+  current_position = player["y"]
+  if current_position < (height - 300) then
+    player["y"] = player["y"] + 10
   end
 end
 
@@ -50,6 +65,15 @@ function controls()
   if love.keyboard.isDown("a") then
     move_left()
   end
+
+  if love.keyboard.isDown("w") then
+    move_up()
+  end
+
+  if love.keyboard.isDown("s") then
+    move_down()
+  end
+
   if love.mouse.isDown(1) then
     x = love.mouse.getX()
     if (x > half_width) then
@@ -61,21 +85,17 @@ function controls()
 end
 
 function love.update(dt)
-  controls_sec_ref = controls_sec_ref + dt
   function love.draw()
     way_drawer(dt)
     player_drawer()
   end
 
-  if controls_sec_ref > 1/10 then
-    controls_sec_ref = 0
-    controls()
-  end
+  controls()
+  print(lateral_size)
 
-  current_position = player["position"]
 
-  if current_position == 1 or current_position == 7 then
-    score = score - dt
+  if player["x"] < (lateral_size * 2 - 10) or player["x"] > (width - lateral_size) then
+    score = score - (dt * 2)
   else
     score = score + dt
   end
