@@ -12,21 +12,54 @@ player["x"] = half_width
 player["y"] = 900
 player["radius"] = 30
 
+function get_enemy_boundaries()
+  return lume.random(lateral_size, (width - lateral_size))
+end
+
+enemies = {}
+defaultEnemy = {}
+defaultEnemy["x"] = get_enemy_boundaries()
+defaultEnemy["y"] = 0
+defaultEnemy["radius"] = 20
+defaultEnemy["speed"] = 10 
+
+table.insert(enemies, defaultEnemy)
+
 function love.load()
   love.window.setMode(width, height)
 end
 
 function player_drawer()
+  love.graphics.setColor(1, 1, 1, 1)
   x_cord = player["x"] - 50
   love.graphics.circle("fill", x_cord, player["y"], player["radius"])
 end
 
-function way_drawer(dt)
-  lateral_size = width / 8
+function way_drawer()
+  love.graphics.setColor(1, 1, 1, 1)
   love.graphics.print(lume.round(score * 100), 0, 100)
   love.graphics.line(lateral_size, 0, lateral_size, height)
   love.graphics.line(width - lateral_size, 0, (width - lateral_size), height)
   love.graphics.line(width - lateral_size, 0, (width - lateral_size), height)
+end
+
+function update_enemies()
+  for i=1,#enemies do
+    speed = enemies[i]["speed"]
+    if enemies[i]["y"] < height then
+      enemies[i]["y"] = enemies[i]["y"] + speed
+    else
+      enemies[i]["y"] = 0
+      enemies[i]["x"] = get_enemy_boundaries()
+    end
+  end
+end
+
+function enemies_drawer()
+  for i=1,#enemies do
+    love.graphics.setColor(0.5, 0, 0, 1)
+    love.graphics.circle("fill", enemies[i]["x"], enemies[i]["y"], enemies[i]["radius"])
+  end
 end
 
 function move_right()
@@ -85,18 +118,18 @@ function controls()
 end
 
 function love.update(dt)
-  function love.draw()
-    way_drawer(dt)
-    player_drawer()
-  end
-
   controls()
-  print(lateral_size)
-
+  update_enemies()
 
   if player["x"] < (lateral_size * 2 - 10) or player["x"] > (width - lateral_size) then
     score = score - (dt * 2)
   else
     score = score + dt
   end
+end
+
+function love.draw()
+  way_drawer()
+  player_drawer()
+  enemies_drawer()
 end
