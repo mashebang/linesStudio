@@ -1,4 +1,5 @@
 lume = require "lume"
+HC = require 'hardoncollider'
 
 width = 720
 height = 1280
@@ -11,6 +12,20 @@ player = {}
 player["x"] = half_width 
 player["y"] = 900
 player["radius"] = 30
+player["collider"] = HC.circle(player["x"], player["y"], player["radius"])
+
+Collider = {}
+
+-- this is called when two shapes collide
+function on_collision(dt, shape_a, shape_b, mtv_x, mtv_y)
+  text[#text+1] = string.format("Colliding. mtv = (%s,%s)", 
+                                  mtv_x, mtv_y)
+end
+
+-- this is called when two shapes stop colliding
+function collision_stop(dt, shape_a, shape_b)
+  text[#text+1] = "Stopped colliding"
+end
 
 function get_enemy_boundaries()
   return lume.random(lateral_size, (width - lateral_size))
@@ -22,6 +37,7 @@ defaultEnemy["x"] = get_enemy_boundaries()
 defaultEnemy["y"] = 0
 defaultEnemy["radius"] = 20
 defaultEnemy["speed"] = 10 
+defaultEnemy["collider"] = HC.circle(defaultEnemy["x"], defaultEnemy["y"], defaultEnemy["radius"])
 
 table.insert(enemies, defaultEnemy)
 
@@ -33,6 +49,7 @@ function player_drawer()
   love.graphics.setColor(1, 1, 1, 1)
   x_cord = player["x"] - 50
   love.graphics.circle("fill", x_cord, player["y"], player["radius"])
+  player["collider"] = HC.circle(x_cord, player["y"], player["radius"])
 end
 
 function way_drawer()
@@ -59,6 +76,7 @@ function enemies_drawer()
   for i=1,#enemies do
     love.graphics.setColor(0.5, 0, 0, 1)
     love.graphics.circle("fill", enemies[i]["x"], enemies[i]["y"], enemies[i]["radius"])
+    enemies[i]["collider"] = HC.circle(enemies[i]["x"], enemies[i]["y"], enemies[i]["radius"])
   end
 end
 
@@ -91,6 +109,11 @@ function move_down()
 end
 
 function controls()
+  collisions = HC.collisions(player["collider"])
+  for other, separating_vector in pairs(collisions) do
+    print(other, separating_vector)
+  end
+
   if love.keyboard.isDown("d") then
     move_right()
   end
@@ -109,11 +132,9 @@ function controls()
 
   if love.mouse.isDown(1) then
     x = love.mouse.getX()
-    if (x > half_width) then
-      move_right()
-    else
-      move_left()
-    end  
+    y = love.mouse.getY()
+    player["y"] = y
+    player["x"] = x + player["radius"]
   end
 end
 
