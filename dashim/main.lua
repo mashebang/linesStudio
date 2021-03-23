@@ -1,11 +1,10 @@
 lume = require "lume"
 
-time = 0
-game_over = false
 width = 720
 height = 1280
 half_height = height / 2
 half_width = width / 2
+score = 0
 lateral_size = width / 8
 
 player = {}
@@ -14,49 +13,37 @@ player["y"] = 900
 player["radius"] = 30
 
 function get_enemy_boundaries()
-  return lume.random(20, width - 20)
+  return lume.random(lateral_size, (width - lateral_size))
 end
 
-function create_enemy()
-  enemy = {}
-  enemy["y"] = 0
-  enemy["radius"] = 20
-  enemy["speed"] = lume.random(5, 20)
-  enemy["x"] = get_enemy_boundaries()
-  enemy["sides"] = lume.random(5, 20)
-  return enemy
-end
+enemies = {}
+defaultEnemy = {}
+defaultEnemy["x"] = get_enemy_boundaries()
+defaultEnemy["y"] = 0
+defaultEnemy["radius"] = 20
+defaultEnemy["speed"] = 20
 
-function bootstrap()
-  enemies = {}
-  time = 0
-  player["y"] = 900
-  table.insert(enemies, create_enemy())
-  love.graphics.setBackgroundColor(1, 1, 1, 1)
-end
+table.insert(enemies, defaultEnemy)
 
 function love.load()
   love.window.setMode(width, height)
-  bootstrap()
 end
 
 function player_drawer()
-  love.graphics.setColor(0, 0, 0, 1)
+  love.graphics.setColor(1, 1, 1, 1)
   x_cord = player["x"]
   love.graphics.circle("fill", x_cord, player["y"], player["radius"])
 end
 
-function update_enemies(dt)
-  local enemiesAlive = 1
-  if (time > 2) then
-    enemiesAlive = math.ceil(time / 2)
-    print(time, enemiesAlive)
+function way_drawer()
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.print(lume.round(score * 100), 0, 100)
+  love.graphics.line(lateral_size, 0, lateral_size, height)
+  love.graphics.line(width - lateral_size, 0, (width - lateral_size), height)
+  love.graphics.line(width - lateral_size, 0, (width - lateral_size), height)
+end
 
-    if (table.getn(enemies) < enemiesAlive) then
-      table.insert(enemies, create_enemy())
-    end
-  end
-
+function update_enemies()
   for i=1,#enemies do
     enemyXPoint = enemies[i]['x']
     playerXPoint = player['x']
@@ -66,11 +53,10 @@ function update_enemies(dt)
     distanceFromPlayer = lume.distance(enemyXPoint, enemyYPoint, playerXPoint, playerYPoint)
 
     if (distanceFromPlayer < (enemies[i]['radius'] + player['radius'])) then
-      game_over = true
+      print('colidiu', (enemies[i]['radius'] + player['radius']))
     end
     
     speed = enemies[i]["speed"]
-
     if enemies[i]["y"] < height then
       enemies[i]["y"] = enemies[i]["y"] + speed
     else
@@ -81,9 +67,9 @@ function update_enemies(dt)
 end
 
 function enemies_drawer()
-  love.graphics.setColor(lume.random(), lume.random(), lume.random(), 1)
   for i=1,#enemies do
-    love.graphics.circle("fill", enemies[i]["x"], enemies[i]["y"], enemies[i]["radius"], enemies[i]["sides"])
+    love.graphics.setColor(0.5, 0, 0, 1)
+    love.graphics.circle("fill", enemies[i]["x"], enemies[i]["y"], enemies[i]["radius"], 5)
   end
 end
 
@@ -131,28 +117,29 @@ function controls()
   if love.keyboard.isDown("s") then
     move_down()
   end
+
+  if love.mouse.isDown(1) then
+    x = love.mouse.getX()
+    y = love.mouse.getY()
+    player["y"] = y
+    player["x"] = x
+  end
 end
 
 function love.update(dt)
   controls()
-  if (not game_over) then
-    time = time + dt
-    update_enemies(dt)
+  update_enemies()
+
+  -- TODO @awcred: fix this 
+  if player["x"] < (lateral_size * 2 - 10) or player["x"] > (width - lateral_size) then
+    score = score - (dt * 2)
+  else
+    score = score + dt
   end
 end
 
 function love.draw()
-  if (game_over) then
-    love.graphics.print("game over. press any key", half_width - 80, half_height)
-  else
-    player_drawer()
-    enemies_drawer()
-  end
-end
-
-function love.keypressed(key, scancode, isrepeat)
-  if (game_over) then
-    game_over = false
-    bootstrap()
-  end
+  way_drawer()
+  player_drawer()
+  enemies_drawer()
 end
